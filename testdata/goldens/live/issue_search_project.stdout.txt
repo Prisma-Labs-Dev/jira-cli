@@ -1,3 +1,0 @@
-returned: 1
-jql: project = "DEMO" ORDER BY updated DESC
-- DEMO-123 | summary=Issue summary | status=To Do | assignee=Agent User

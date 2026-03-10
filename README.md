@@ -116,35 +116,20 @@ Recorded contract checks:
 go test ./...
 ```
 
-This covers:
+This public repo covers:
 
-- live Jira-backed replay fixtures in `testdata/goldens/live/`
+- unit and command tests
 - synthetic search edge-case fixtures in `testdata/goldens/synthetic/`
 
-Live Jira golden recording:
+## Private Live Validation
 
-```bash
-JIRA_SITE=https://jira-eu-aholddelhaize.atlassian.net \
-JIRA_EMAIL=agent@example.com \
-JIRA_API_TOKEN=*** \
-JIRA_GOLDEN_ISSUE_KEY=SCWI-282 \
-make record-live-goldens
-```
+Real Jira-derived fixtures, recorder tooling, and live replay verification live in the private companion repository `Prisma-Labs-Dev/jira-cli-private`.
 
-This produces:
-
-- untracked raw outputs in `.local/goldens/raw/`
-- sanitized tracked fixtures in `testdata/goldens/live/`
-
-Then verify the recorded contract:
-
-```bash
-go test ./...
-```
+That keeps tenant-derived artifacts out of public git history while still allowing private contributors to validate the CLI against real Jira traffic.
 
 ## CI
 
-GitHub Actions runs `go test ./...` on pushes and pull requests. The committed goldens are part of that contract, so fixture regressions fail CI like code regressions.
+GitHub Actions runs `go test ./...` on pushes and pull requests. Public CI enforces the code plus synthetic fixture contract. Private live-fixture validation runs outside this repo.
 
 ## Tasks
 
@@ -153,5 +138,4 @@ make test
 make test-cover
 make install-local
 make verify-local
-make record-live-goldens
 ```

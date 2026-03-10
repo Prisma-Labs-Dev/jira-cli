@@ -1,9 +1,0 @@
-base_url: https://jira.example.test
-display_url: https://jira.example.test
-deployment_type: Cloud
-version: 0.0.0
-version_numbers: 1001.0.0
-build_number: 1000
-build_date: 2026-01-01T00:00:00.000+0000
-server_time: 2026-01-01T00:00:00.000+0000
-scm_info: e5f99095610c798feb22fa87f63a2b58eb962edb

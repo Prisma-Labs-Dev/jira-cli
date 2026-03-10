@@ -1,8 +1,0 @@
-display_name: Agent User
-email: agent@example.com
-account_id: account-id-1
-account_type: atlassian
-active: true
-locale: en_US
-time_zone: Europe/Amsterdam
-self: https://jira.example.test/rest/api/3/user?accountId=account-id-1
