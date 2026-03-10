@@ -12,6 +12,27 @@ The binary name is `jira`.
 - diagnostics and errors on stderr
 - no prompts, no TUI, no setup wizard
 
+## Install With Homebrew
+
+```bash
+brew tap Prisma-Labs-Dev/tap
+brew install jira-cli
+```
+
+Then start with:
+
+```bash
+jira --help
+jira me --help
+jira issue get --help
+```
+
+Example:
+
+```bash
+jira issue get SCWI-282 --json
+```
+
 ## Install Local
 
 ```bash
