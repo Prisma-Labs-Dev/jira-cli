@@ -1,0 +1,23 @@
+{
+  "issues": [
+    {
+      "fields": {
+        "summary": "First issue"
+      },
+      "key": "DEMO-123"
+    },
+    {
+      "fields": {
+        "assignee": null,
+        "status": {
+          "name": "To Do"
+        },
+        "summary": "Second issue"
+      },
+      "key": "DEMO-124"
+    }
+  ],
+  "jql": "project = \"DEMO\" ORDER BY updated DESC",
+  "maxResults": 2,
+  "total": 2
+}

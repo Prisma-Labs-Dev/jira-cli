@@ -110,6 +110,17 @@ make test
 make test-cover
 ```
 
+Recorded contract checks:
+
+```bash
+go test ./...
+```
+
+This covers:
+
+- live Jira-backed replay fixtures in `testdata/goldens/live/`
+- synthetic search edge-case fixtures in `testdata/goldens/synthetic/`
+
 Live Jira golden recording:
 
 ```bash
@@ -130,6 +141,10 @@ Then verify the recorded contract:
 ```bash
 go test ./...
 ```
+
+## CI
+
+GitHub Actions runs `go test ./...` on pushes and pull requests. The committed goldens are part of that contract, so fixture regressions fail CI like code regressions.
 
 ## Tasks
 

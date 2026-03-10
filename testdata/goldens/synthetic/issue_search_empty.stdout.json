@@ -1,0 +1,5 @@
+{
+  "jql": "project = \"DEMO\" ORDER BY updated DESC",
+  "maxResults": 50,
+  "startAt": 20
+}

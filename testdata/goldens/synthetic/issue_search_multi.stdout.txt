@@ -1,0 +1,6 @@
+returned: 2
+total: 2
+max_results: 2
+jql: project = "DEMO" ORDER BY updated DESC
+- DEMO-123 | summary=First issue
+- DEMO-124 | summary=Second issue | status=To Do | assignee=null

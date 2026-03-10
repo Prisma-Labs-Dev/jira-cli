@@ -78,10 +78,47 @@ func TestRecordedGoldens(t *testing.T) {
 		},
 	}
 
+	runGoldenCases(t, "live", cases)
+}
+
+func TestSyntheticGoldens(t *testing.T) {
+	cases := []goldenCaseDefinition{
+		{
+			name: "issue_search_empty",
+			args: []string{"issue", "search", "--project", "DEMO", "--fields", "summary,status,assignee"},
+			load: func(t *testing.T, raw []byte) stubJiraAPI {
+				t.Helper()
+				var response jiraSearchResponse
+				if err := json.Unmarshal(raw, &response); err != nil {
+					t.Fatalf("unmarshal issue search empty response: %v", err)
+				}
+				return stubJiraAPI{search: response}
+			},
+		},
+		{
+			name: "issue_search_multi",
+			args: []string{"issue", "search", "--project", "DEMO", "--limit", "2", "--fields", "summary,status,assignee"},
+			load: func(t *testing.T, raw []byte) stubJiraAPI {
+				t.Helper()
+				var response jiraSearchResponse
+				if err := json.Unmarshal(raw, &response); err != nil {
+					t.Fatalf("unmarshal issue search multi response: %v", err)
+				}
+				return stubJiraAPI{search: response}
+			},
+		},
+	}
+
+	runGoldenCases(t, "synthetic", cases)
+}
+
+func runGoldenCases(t *testing.T, suite string, cases []goldenCaseDefinition) {
+	t.Helper()
+
 	for _, current := range cases {
 		t.Run(current.name, func(t *testing.T) {
-			jsonPath := filepath.Join("testdata", "goldens", "live", current.name+".stdout.json")
-			textPath := filepath.Join("testdata", "goldens", "live", current.name+".stdout.txt")
+			jsonPath := filepath.Join("testdata", "goldens", suite, current.name+".stdout.json")
+			textPath := filepath.Join("testdata", "goldens", suite, current.name+".stdout.txt")
 
 			jsonFixture, err := os.ReadFile(jsonPath)
 			if err != nil {

@@ -3,12 +3,19 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 )
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (fn roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
+	return fn(request)
+}
 
 func TestJiraClientGetMyselfUsesBasicAuth(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -119,6 +126,75 @@ func TestJiraClientGetServerInfoFormatsErrors(t *testing.T) {
 	}
 }
 
+func TestJiraClientGetMyselfSurfacesTransportFailures(t *testing.T) {
+	client := newJiraClient(resolvedRuntimeConfig{
+		site:  "https://jira.example.test",
+		email: "agent@example.com",
+		token: "test-token",
+	})
+	client.httpClient.Transport = roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+		return nil, errors.New("dial tcp: timeout")
+	})
+
+	_, err := client.GetMyself(context.Background())
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "request Jira /rest/api/3/myself") || !strings.Contains(err.Error(), "dial tcp: timeout") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestJiraClientGetIssueRejectsMalformedJSON(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"key":"SCWI-282"`))
+	}))
+	defer server.Close()
+
+	client := newJiraClient(resolvedRuntimeConfig{
+		site:  server.URL,
+		email: "agent@example.com",
+		token: "test-token",
+	})
+	_, err := client.GetIssue(context.Background(), "SCWI-282", []string{"summary"})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "decode Jira response for /rest/api/3/issue/SCWI-282") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestJiraClientSearchIssuesOmitsOptionalQueryParams(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if got := request.URL.Query().Get("fields"); got != "" {
+			t.Fatalf("expected empty fields query, got %q", got)
+		}
+		if got := request.URL.Query().Get("maxResults"); got != "" {
+			t.Fatalf("expected empty maxResults query, got %q", got)
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"issues":[]}`))
+	}))
+	defer server.Close()
+
+	client := newJiraClient(resolvedRuntimeConfig{
+		site:  server.URL,
+		email: "agent@example.com",
+		token: "test-token",
+	})
+	response, err := client.SearchIssues(context.Background(), jiraSearchRequest{
+		JQL: `assignee = currentUser() ORDER BY updated DESC`,
+	})
+	if err != nil {
+		t.Fatalf("SearchIssues: %v", err)
+	}
+	if response.JQL != `assignee = currentUser() ORDER BY updated DESC` {
+		t.Fatalf("unexpected JQL echo: %+v", response)
+	}
+}
+
 func TestRenderMeText(t *testing.T) {
 	text := renderMeText(jiraMyselfResponse{
 		AccountID:    "abc-123",
@@ -173,6 +249,58 @@ func TestRenderSearchText(t *testing.T) {
 	}
 }
 
+func TestRenderSearchTextEmptyResultSet(t *testing.T) {
+	text := renderSearchText(jiraSearchResponse{
+		JQL:        `project = "SCWI" ORDER BY updated DESC`,
+		StartAt:    20,
+		MaxResults: 50,
+	}, []string{"summary", "status"})
+	for _, want := range []string{
+		"returned: 0",
+		"start_at: 20",
+		"max_results: 50",
+		`jql: project = "SCWI" ORDER BY updated DESC`,
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected %q in output %q", want, text)
+		}
+	}
+	if strings.Contains(text, "\n- ") {
+		t.Fatalf("did not expect issue rows in %q", text)
+	}
+}
+
+func TestRenderSearchTextMultipleIssuesAndSparseFields(t *testing.T) {
+	text := renderSearchText(jiraSearchResponse{
+		Total: 2,
+		Issues: []jiraIssueResponse{
+			{
+				Key: "SCWI-282",
+				Fields: map[string]any{
+					"summary": "Implement thing",
+				},
+			},
+			{
+				Key: "SCWI-283",
+				Fields: map[string]any{
+					"summary":  "Review thing",
+					"status":   map[string]any{"name": "To Do"},
+					"assignee": nil,
+				},
+			},
+		},
+	}, []string{"summary", "status", "assignee"})
+	for _, want := range []string{
+		"total: 2",
+		"- SCWI-282 | summary=Implement thing",
+		"- SCWI-283 | summary=Review thing | status=To Do | assignee=null",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected %q in output %q", want, text)
+		}
+	}
+}
+
 func TestRenderFieldValueCoversCollectionsAndFallbacks(t *testing.T) {
 	if got := renderFieldValue([]any{"one", "two"}); got != "one, two" {
 		t.Fatalf("unexpected slice render: %q", got)
@@ -216,5 +344,19 @@ func TestReadJiraErrorCollapsesStructuredBody(t *testing.T) {
 		if !strings.Contains(err.Error(), want) {
 			t.Fatalf("expected %q in error, got %v", want, err)
 		}
+	}
+}
+
+func TestReadJiraErrorHandlesEmptyBody(t *testing.T) {
+	response := &http.Response{
+		StatusCode: http.StatusTooManyRequests,
+		Body:       io.NopCloser(strings.NewReader("")),
+	}
+	err := readJiraError("/rest/api/3/search/jql", response)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if err.Error() != "jira /rest/api/3/search/jql failed with status 429" {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

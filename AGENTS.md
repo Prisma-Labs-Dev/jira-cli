@@ -30,3 +30,6 @@ The binary is `jira`.
    - record with `make record-live-goldens`
    - review `testdata/goldens/live/`
    - verify with `go test ./...`
+8. Keep both golden layers intact:
+   - `testdata/goldens/live/` proves the recorded real Jira contract
+   - `testdata/goldens/synthetic/` covers edge cases that are hard to guarantee from one live tenant or one reference issue
