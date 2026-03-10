@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-const packageVersion = "0.1.0"
+const packageVersion = "0.1.1"
 
 const rootHelp = `jira - agent-first Jira CLI for deterministic automation
 
