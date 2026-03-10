@@ -1,0 +1,42 @@
+{
+  "issues": [
+    {
+      "fields": {
+        "assignee": {
+          "accountId": "account-id-1",
+          "accountType": "atlassian",
+          "active": true,
+          "avatarUrls": {
+            "16x16": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/account-id-1/06eda5f4-a671-4645-8f5e-b10aab360460/16",
+            "24x24": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/account-id-1/06eda5f4-a671-4645-8f5e-b10aab360460/24",
+            "32x32": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/account-id-1/06eda5f4-a671-4645-8f5e-b10aab360460/32",
+            "48x48": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/account-id-1/06eda5f4-a671-4645-8f5e-b10aab360460/48"
+          },
+          "displayName": "Agent User",
+          "emailAddress": "agent@example.com",
+          "self": "https://jira.example.test/rest/api/3/user?accountId=712020%3A89b95ffa-154f-4cfa-96c6-a95ea1644d12",
+          "timeZone": "Europe/Amsterdam"
+        },
+        "status": {
+          "description": "",
+          "iconUrl": "https://jira.example.test/",
+          "id": "10500",
+          "name": "To Do",
+          "self": "https://jira.example.test/rest/api/3/status/10500",
+          "statusCategory": {
+            "colorName": "blue-gray",
+            "id": 2,
+            "key": "new",
+            "name": "To Do",
+            "self": "https://jira.example.test/rest/api/3/statuscategory/2"
+          }
+        },
+        "summary": "Issue summary"
+      },
+      "id": "1942754",
+      "key": "DEMO-123",
+      "self": "https://jira.example.test/rest/api/3/issue/1942754"
+    }
+  ],
+  "jql": "project = \"DEMO\" ORDER BY updated DESC"
+}

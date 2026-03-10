@@ -15,6 +15,7 @@ const defaultHTTPTimeout = 30 * time.Second
 
 type jiraAPI interface {
 	GetIssue(ctx context.Context, issueKey string, fields []string) (jiraIssueResponse, error)
+	SearchIssues(ctx context.Context, request jiraSearchRequest) (jiraSearchResponse, error)
 	GetMyself(ctx context.Context) (jiraMyselfResponse, error)
 	GetServerInfo(ctx context.Context) (jiraServerInfoResponse, error)
 }
@@ -62,6 +63,20 @@ type jiraIssueResponse struct {
 	Self   string         `json:"self,omitempty"`
 }
 
+type jiraSearchRequest struct {
+	Fields     []string
+	JQL        string
+	MaxResults int
+}
+
+type jiraSearchResponse struct {
+	Issues     []jiraIssueResponse `json:"issues,omitempty"`
+	JQL        string              `json:"jql,omitempty"`
+	MaxResults int                 `json:"maxResults,omitempty"`
+	StartAt    int                 `json:"startAt,omitempty"`
+	Total      int                 `json:"total,omitempty"`
+}
+
 func newJiraClient(config resolvedRuntimeConfig) *jiraClient {
 	return &jiraClient{
 		baseURL: strings.TrimRight(config.site, "/"),
@@ -99,6 +114,24 @@ func (client *jiraClient) GetServerInfo(ctx context.Context) (jiraServerInfoResp
 	if err := client.getJSON(ctx, "/rest/api/3/serverInfo", false, &response, nil); err != nil {
 		return jiraServerInfoResponse{}, err
 	}
+	return response, nil
+}
+
+func (client *jiraClient) SearchIssues(ctx context.Context, request jiraSearchRequest) (jiraSearchResponse, error) {
+	query := url.Values{}
+	query.Set("jql", request.JQL)
+	if len(request.Fields) > 0 {
+		query.Set("fields", strings.Join(request.Fields, ","))
+	}
+	if request.MaxResults > 0 {
+		query.Set("maxResults", fmt.Sprintf("%d", request.MaxResults))
+	}
+
+	var response jiraSearchResponse
+	if err := client.getJSON(ctx, "/rest/api/3/search/jql", true, &response, query); err != nil {
+		return jiraSearchResponse{}, err
+	}
+	response.JQL = request.JQL
 	return response, nil
 }
 
@@ -259,6 +292,42 @@ func renderIssueText(value jiraIssueResponse, fields []string) string {
 	}
 	if value.Self != "" {
 		lines = append(lines, fmt.Sprintf("self: %s", value.Self))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func renderSearchText(value jiraSearchResponse, fields []string) string {
+	var lines []string
+	lines = append(lines, fmt.Sprintf("returned: %d", len(value.Issues)))
+	if value.Total != 0 {
+		lines = append(lines, fmt.Sprintf("total: %d", value.Total))
+	}
+	if value.StartAt != 0 {
+		lines = append(lines, fmt.Sprintf("start_at: %d", value.StartAt))
+	}
+	if value.MaxResults != 0 {
+		lines = append(lines, fmt.Sprintf("max_results: %d", value.MaxResults))
+	}
+	if value.JQL != "" {
+		lines = append(lines, fmt.Sprintf("jql: %s", value.JQL))
+	}
+	for _, issue := range value.Issues {
+		var parts []string
+		if issue.Key != "" {
+			parts = append(parts, issue.Key)
+		}
+		for _, field := range fields {
+			field = strings.TrimSpace(field)
+			if field == "" {
+				continue
+			}
+			fieldValue, ok := issue.Fields[field]
+			if !ok {
+				continue
+			}
+			parts = append(parts, fmt.Sprintf("%s=%s", field, renderFieldValue(fieldValue)))
+		}
+		lines = append(lines, "- "+strings.Join(parts, " | "))
 	}
 	return strings.Join(lines, "\n")
 }

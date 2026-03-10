@@ -1,0 +1,42 @@
+{
+  "issues": [
+    {
+      "fields": {
+        "assignee": {
+          "accountId": "account-id-1",
+          "accountType": "atlassian",
+          "active": true,
+          "avatarUrls": {
+            "16x16": "https://secure.gravatar.com/avatar/42414b9134bce272f2e93763c6e53bb1?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FIS-0.png",
+            "24x24": "https://secure.gravatar.com/avatar/42414b9134bce272f2e93763c6e53bb1?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FIS-0.png",
+            "32x32": "https://secure.gravatar.com/avatar/42414b9134bce272f2e93763c6e53bb1?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FIS-0.png",
+            "48x48": "https://secure.gravatar.com/avatar/42414b9134bce272f2e93763c6e53bb1?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FIS-0.png"
+          },
+          "displayName": "Agent User",
+          "emailAddress": "agent@example.com",
+          "self": "https://jira.example.test/rest/api/3/user?accountId=712020%3A091f82e2-a856-4d46-b453-7e936081cb3e",
+          "timeZone": "Europe/Amsterdam"
+        },
+        "status": {
+          "description": "",
+          "iconUrl": "https://jira.example.test/images/icons/statuses/generic.png",
+          "id": "11811",
+          "name": "Reviewing",
+          "self": "https://jira.example.test/rest/api/3/status/11811",
+          "statusCategory": {
+            "colorName": "yellow",
+            "id": 4,
+            "key": "indeterminate",
+            "name": "In Progress",
+            "self": "https://jira.example.test/rest/api/3/statuscategory/4"
+          }
+        },
+        "summary": "Issue summary"
+      },
+      "id": "2496519",
+      "key": "DEMO-123",
+      "self": "https://jira.example.test/rest/api/3/issue/2496519"
+    }
+  ],
+  "jql": "key = DEMO-123"
+}

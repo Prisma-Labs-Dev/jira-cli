@@ -1,0 +1,6 @@
+key: DEMO-123
+id: 2496519
+summary: Issue summary
+status: Reviewing
+assignee: Agent User
+self: https://jira.example.test/rest/api/3/issue/2496519

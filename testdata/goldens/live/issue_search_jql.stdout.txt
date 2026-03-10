@@ -1,0 +1,3 @@
+returned: 1
+jql: key = DEMO-123
+- DEMO-123 | summary=Issue summary | status=Reviewing | assignee=Agent User

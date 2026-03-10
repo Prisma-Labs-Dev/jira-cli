@@ -37,7 +37,14 @@ Examples:
   jira me --json
   jira serverinfo --json
   jira issue get SCWI-282 --fields summary,status --json
+  jira issue search --project SCWI --status "To Do" --json
   jira issue search --jql 'project = SCWI ORDER BY updated DESC' --json`
+
+const resolutionHelp = `Resolution:
+  Flags override env vars.
+  Env vars override the config file.
+  Supported env vars: JIRA_SITE, JIRA_BASE_URL, JIRA_EMAIL, JIRA_TOKEN, JIRA_API_TOKEN, JIRA_CONFIG.
+  Default config path: ~/.config/jira/config.json`
 
 const issueHelp = `jira issue - explicit issue read commands
 
@@ -68,10 +75,7 @@ Flags:
   -h, --help             Show this help
 
 Resolution:
-  Flags override env vars.
-  Env vars override the config file.
-  Supported env vars: JIRA_SITE, JIRA_BASE_URL, JIRA_EMAIL, JIRA_TOKEN, JIRA_API_TOKEN, JIRA_CONFIG.
-  Default config path: ~/.config/jira/config.json
+` + resolutionHelp + `
 
 Examples:
   jira me --json
@@ -91,9 +95,7 @@ Flags:
   -h, --help             Show this help
 
 Resolution:
-  Flags override env vars.
-  Env vars override the config file.
-  Server info currently validates the site input before Jira transport is implemented.
+` + resolutionHelp + `
 
 Examples:
   jira serverinfo --json
@@ -112,6 +114,9 @@ Flags:
   --site <url>           Jira base URL override
   --token <value>        Jira API token override
   -h, --help             Show this help
+
+Resolution:
+` + resolutionHelp + `
 
 Examples:
   jira issue get SCWI-282
@@ -136,13 +141,25 @@ Flags:
   --token <value>        Jira API token override
   -h, --help             Show this help
 
+Resolution:
+` + resolutionHelp + `
+
 Notes:
   Use either explicit filters or --jql in one call.
+  Explicit filter mode builds a literal JQL query and appends ORDER BY updated DESC.
 
 Examples:
   jira issue search --project SCWI --status "To Do" --json
   jira issue search --assignee currentUser() --fields key,summary,status --json
   jira issue search --jql 'project = SCWI ORDER BY updated DESC' --json`
+
+const versionHelp = `jira version
+
+Usage:
+  jira version
+
+Examples:
+  jira version`
 
 type cliEnvironment struct {
 	stderr io.Writer
@@ -203,7 +220,18 @@ func run(argv []string, env cliEnvironment) int {
 	}
 
 	switch argv[0] {
-	case "version", "--version":
+	case "version":
+		if len(argv) > 1 && isHelpFlag(argv[1]) {
+			_, _ = fmt.Fprintln(env.stdout, versionHelp)
+			return 0
+		}
+		_, _ = fmt.Fprintln(env.stdout, packageVersion)
+		return 0
+	case "--version":
+		if len(argv) > 1 && isHelpFlag(argv[1]) {
+			_, _ = fmt.Fprintln(env.stdout, versionHelp)
+			return 0
+		}
 		_, _ = fmt.Fprintln(env.stdout, packageVersion)
 		return 0
 	case "issue":
@@ -348,8 +376,27 @@ func runIssueSearch(argv []string, env cliEnvironment) error {
 	if err := resolved.Validate(configRequirements{requireSite: true, requireEmail: true, requireToken: true}); err != nil {
 		return err
 	}
-
-	return scaffoldOnlyError("issue search")
+	client, err := jiraAPIFactory(resolved)
+	if err != nil {
+		return err
+	}
+	fields := splitCommaList(options.fields)
+	jql := options.jql
+	if jql == "" {
+		jql, err = buildSearchJQL(options)
+		if err != nil {
+			return err
+		}
+	}
+	response, err := client.SearchIssues(context.Background(), jiraSearchRequest{
+		Fields:     fields,
+		JQL:        jql,
+		MaxResults: options.limit,
+	})
+	if err != nil {
+		return err
+	}
+	return writeOutput(response, options.json, renderSearchText(response, fields), env)
 }
 
 func parseCommandOptions(name string, argv []string) (commandOptions, bool, error) {
@@ -396,7 +443,18 @@ func parseIssueGetOptions(argv []string) (issueGetOptions, bool, error) {
 	flags.BoolVar(&help, "help", false, "Show help")
 	flags.BoolVar(&help, "h", false, "Show help")
 
-	if err := flags.Parse(argv); err != nil {
+	normalized, err := normalizeInterspersedArgs(argv, map[string]bool{
+		"--config": true,
+		"--email":  true,
+		"--fields": true,
+		"--site":   true,
+		"--token":  true,
+	})
+	if err != nil {
+		return issueGetOptions{}, false, err
+	}
+
+	if err := flags.Parse(normalized); err != nil {
 		return issueGetOptions{}, false, normalizeFlagError("issue get", err)
 	}
 	if help {
@@ -450,6 +508,9 @@ func parseIssueSearchOptions(argv []string) (issueSearchOptions, bool, error) {
 	if options.jql != "" && (options.project != "" || options.assignee != "" || len(statuses) > 0) {
 		return issueSearchOptions{}, false, errors.New("issue search accepts either --jql or explicit filters, not both")
 	}
+	if options.jql == "" && options.project == "" && options.assignee == "" && len(statuses) == 0 {
+		return issueSearchOptions{}, false, errors.New("issue search requires --jql or at least one explicit filter")
+	}
 	options.statuses = []string(statuses)
 	return options, false, nil
 }
@@ -459,6 +520,33 @@ func normalizeFlagError(name string, err error) error {
 		return nil
 	}
 	return fmt.Errorf("%s: %w", name, err)
+}
+
+func normalizeInterspersedArgs(argv []string, valueFlags map[string]bool) ([]string, error) {
+	var flags []string
+	var positionals []string
+
+	for index := 0; index < len(argv); index++ {
+		current := argv[index]
+		if current == "--" {
+			positionals = append(positionals, argv[index+1:]...)
+			break
+		}
+		if strings.HasPrefix(current, "-") {
+			flags = append(flags, current)
+			if valueFlags[current] {
+				if index+1 >= len(argv) {
+					return nil, fmt.Errorf("missing value for %s", current)
+				}
+				index++
+				flags = append(flags, argv[index])
+			}
+			continue
+		}
+		positionals = append(positionals, current)
+	}
+
+	return append(flags, positionals...), nil
 }
 
 func scaffoldOnlyError(command string) error {
@@ -494,4 +582,62 @@ func splitCommaList(value string) []string {
 		parts = append(parts, item)
 	}
 	return parts
+}
+
+func buildSearchJQL(options issueSearchOptions) (string, error) {
+	var clauses []string
+	if options.project != "" {
+		clauses = append(clauses, "project = "+quoteJQLValue(options.project))
+	}
+	if options.assignee != "" {
+		clauses = append(clauses, "assignee = "+renderJQLOperand(options.assignee))
+	}
+	if len(options.statuses) == 1 {
+		clauses = append(clauses, "status = "+quoteJQLValue(options.statuses[0]))
+	}
+	if len(options.statuses) > 1 {
+		values := make([]string, 0, len(options.statuses))
+		for _, status := range options.statuses {
+			values = append(values, quoteJQLValue(status))
+		}
+		clauses = append(clauses, "status in ("+strings.Join(values, ", ")+")")
+	}
+	if len(clauses) == 0 {
+		return "", errors.New("issue search could not build JQL from empty explicit filters")
+	}
+	return strings.Join(clauses, " AND ") + " ORDER BY updated DESC", nil
+}
+
+func renderJQLOperand(value string) string {
+	if isLikelyJQLFunction(value) {
+		return value
+	}
+	return quoteJQLValue(value)
+}
+
+func quoteJQLValue(value string) string {
+	replacer := strings.NewReplacer(`\`, `\\`, `"`, `\"`)
+	return `"` + replacer.Replace(value) + `"`
+}
+
+func isLikelyJQLFunction(value string) bool {
+	value = strings.TrimSpace(value)
+	if !strings.HasSuffix(value, "()") || strings.Contains(value, " ") {
+		return false
+	}
+	if len(value) < 3 {
+		return false
+	}
+	for index, r := range value[:len(value)-2] {
+		if index == 0 {
+			if !(r >= 'A' && r <= 'Z') && !(r >= 'a' && r <= 'z') {
+				return false
+			}
+			continue
+		}
+		if !(r >= 'A' && r <= 'Z') && !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9') && r != '_' {
+			return false
+		}
+	}
+	return true
 }
