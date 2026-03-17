@@ -1,0 +1,34 @@
+jira - agent-first Jira CLI for deterministic research and discovery
+
+Usage:
+  jira <command> [flags]
+  jira <command> --help
+
+Commands:
+  me           Print the authenticated Jira user
+  serverinfo   Print Jira server metadata
+  issue        Read issues, search with JQL, and inspect comments
+  project      Discover projects and project workflow statuses
+  board        Discover Jira boards through the Agile API
+  filter       Discover saved filters
+  field        Discover Jira fields with bounded output
+  version      Print the CLI version
+
+Contract:
+  - non-interactive only
+  - primary results on stdout
+  - diagnostics and errors on stderr
+  - explicit flags over hidden defaults
+  - per-command --json for structured output
+  - config resolution is flags > env > config file
+  - compact default output with explicit pagination flags
+
+Examples:
+  jira me --json
+  jira issue get SCWI-282 --json
+  jira issue search --project SCWI --status "In Progress"
+  jira issue search --jql 'project = SCWI ORDER BY updated DESC' --limit 25 --json
+  jira project list --limit 25
+  jira board list --project SCWI --json
+  jira filter list --limit 20
+  jira field list --custom-only --search warehouse --json

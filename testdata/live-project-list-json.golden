@@ -1,0 +1,23 @@
+{
+  "firstItem": {
+    "key": true,
+    "name": true
+  },
+  "itemsReturned": 10,
+  "nextHintPresent": true,
+  "pageLimit": 10,
+  "schema": {
+    "fields": [
+      "id",
+      "key",
+      "name",
+      "projectType",
+      "style",
+      "simplified",
+      "lead",
+      "url",
+      "description"
+    ],
+    "itemType": "project-summary"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "firstIssueTypeHasStatuses": true,
+  "issueTypesCountPositive": true,
+  "schema": {
+    "fields": [
+      "projectKey",
+      "issueTypes.name",
+      "issueTypes.statuses"
+    ],
+    "itemType": "project-statuses"
+  }
+}

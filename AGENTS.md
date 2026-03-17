@@ -22,3 +22,12 @@ The binary is `jira`.
 2. Prefer extending help text and tests together when changing CLI behavior.
 3. Avoid overspecifying usage in repo docs when `jira --help` can carry the contract directly.
 4. Keep installation simple: local binary at `/Users/vabole/.local/bin/jira`.
+
+## Live Jira Validation
+
+- Prefer env-driven live validation over checked-in local config.
+- In this workspace, `make test-live-bw` is the preferred path for future agents.
+- In this tenant, Jira and Confluence share the same API token, but the Jira site is `https://jira-eu-aholddelhaize.atlassian.net`.
+- Run live validation with `JIRA_SITE="https://jira-eu-aholddelhaize.atlassian.net" make test-live-bw`.
+- That flow reads the Bitwarden item `Confluence CLI`, derives `JIRA_EMAIL` and `JIRA_TOKEN`, applies the explicit Jira site override, and runs the live E2E suite without printing secrets.
+- If the Bitwarden item name changes, set `BW_JIRA_ITEM_NAME` before invoking the target.

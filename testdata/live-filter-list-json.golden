@@ -1,0 +1,20 @@
+{
+  "firstItem": {
+    "id": true,
+    "name": true
+  },
+  "itemsReturned": 1,
+  "pageLimit": 1,
+  "schema": {
+    "fields": [
+      "id",
+      "name",
+      "owner",
+      "jql",
+      "viewUrl",
+      "searchUrl",
+      "description"
+    ],
+    "itemType": "filter-summary"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "firstItem": {
+    "id": true,
+    "name": true,
+    "type": true
+  },
+  "itemsReturned": 1,
+  "pageLimit": 1,
+  "schema": {
+    "fields": [
+      "id",
+      "name",
+      "type",
+      "projectKey",
+      "projectName",
+      "locationName"
+    ],
+    "itemType": "board-summary"
+  }
+}

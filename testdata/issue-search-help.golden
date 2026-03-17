@@ -1,0 +1,40 @@
+jira issue search
+
+Purpose:
+  Search issues through the working Jira Cloud endpoint: /rest/api/3/search/jql.
+
+Usage:
+  jira issue search [flags]
+
+Flags:
+  --assignee <value>     Filter by assignee value or function, such as currentUser()
+  --config <path>        Optional config file path
+  --email <value>        Jira user email override
+  --fields <names>       Comma-separated field list
+                         default: summary,status,assignee,priority,updated
+  --jql <query>          Raw JQL to execute
+  --json                 Print a stable JSON envelope
+  --limit <n>            Max issues to return (default: 50)
+  --project <key>        Filter by project key
+  --site <url>           Jira base URL override
+  --start-at <n>         Offset for paginated results (default: 0)
+  --status <name>        Filter by status (repeatable)
+  --token <value>        Jira API token override
+  -h, --help             Show this help
+
+Output:
+  Text: one compact row per issue plus pagination summary.
+  JSON: {
+    "items": [...],
+    "page": { "limit": 50, "startAt": 0, "returned": 50, "nextStartAt": 50, ... },
+    "schema": { "itemType": "issue-summary", "fields": ["key", "id", "fields.summary", ...] }
+  }
+
+Notes:
+  Use either --jql or explicit filters in one call.
+  If you omit --jql, the CLI builds a simple JQL expression from --project, --status, and --assignee.
+
+Examples:
+  jira issue search --project SCWI --status "To Do"
+  jira issue search --assignee currentUser() --json
+  jira issue search --jql 'project = SCWI ORDER BY updated DESC' --limit 25 --start-at 50 --json

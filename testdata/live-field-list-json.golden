@@ -1,0 +1,23 @@
+{
+  "firstItem": {
+    "id": true,
+    "name": true
+  },
+  "itemsReturned": 1,
+  "nextHintPresent": true,
+  "pageLimit": 1,
+  "schema": {
+    "fields": [
+      "id",
+      "key",
+      "name",
+      "custom",
+      "schemaType",
+      "schemaItems",
+      "searchable",
+      "orderable",
+      "clauseNames"
+    ],
+    "itemType": "field-summary"
+  }
+}

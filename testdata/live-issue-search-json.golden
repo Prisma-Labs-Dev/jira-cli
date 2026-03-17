@@ -1,0 +1,20 @@
+{
+  "firstItem": {
+    "fields.status": true,
+    "fields.summary": true,
+    "fields.updated": true,
+    "key": true
+  },
+  "itemsReturned": 1,
+  "pageLimit": 1,
+  "schema": {
+    "fields": [
+      "key",
+      "id",
+      "fields.summary",
+      "fields.status",
+      "fields.updated"
+    ],
+    "itemType": "issue-summary"
+  }
+}

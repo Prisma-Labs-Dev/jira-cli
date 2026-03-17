@@ -1,0 +1,18 @@
+{
+  "firstItem": {
+    "bodyText": true,
+    "id": true
+  },
+  "itemsReturned": 1,
+  "pageLimit": 1,
+  "schema": {
+    "fields": [
+      "id",
+      "author",
+      "created",
+      "updated",
+      "bodyText"
+    ],
+    "itemType": "issue-comment"
+  }
+}

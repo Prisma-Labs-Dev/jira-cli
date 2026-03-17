@@ -1,0 +1,18 @@
+{
+  "presence": {
+    "fields.status": true,
+    "fields.summary": true,
+    "fields.updated": true,
+    "key": true
+  },
+  "schema": {
+    "fields": [
+      "key",
+      "id",
+      "fields.summary",
+      "fields.status",
+      "fields.updated"
+    ],
+    "itemType": "issue-detail"
+  }
+}

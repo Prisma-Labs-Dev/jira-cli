@@ -1,0 +1,20 @@
+{
+  "deploymentType": "Cloud",
+  "presence": {
+    "baseUrl": true,
+    "deploymentType": true,
+    "version": true
+  },
+  "schema": {
+    "fields": [
+      "baseUrl",
+      "deploymentType",
+      "version",
+      "versionNumbers",
+      "buildNumber",
+      "buildDate",
+      "serverTime"
+    ],
+    "itemType": "server-info"
+  }
+}

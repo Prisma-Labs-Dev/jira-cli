@@ -1,0 +1,19 @@
+{
+  "presence": {
+    "accountId": true,
+    "active": true,
+    "displayName": true
+  },
+  "schema": {
+    "fields": [
+      "accountId",
+      "displayName",
+      "emailAddress",
+      "active",
+      "accountType",
+      "locale",
+      "timeZone"
+    ],
+    "itemType": "jira-user"
+  }
+}

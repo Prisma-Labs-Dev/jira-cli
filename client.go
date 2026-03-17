@@ -15,8 +15,19 @@ const defaultHTTPTimeout = 30 * time.Second
 
 type jiraAPI interface {
 	GetIssue(ctx context.Context, issueKey string, fields []string) (jiraIssueResponse, error)
+	SearchIssues(ctx context.Context, request jiraIssueSearchRequest) (jiraIssueSearchResponse, error)
+	GetIssueComments(ctx context.Context, issueKey string, startAt, limit int) (jiraCommentPageResponse, error)
 	GetMyself(ctx context.Context) (jiraMyselfResponse, error)
 	GetServerInfo(ctx context.Context) (jiraServerInfoResponse, error)
+	ListProjects(ctx context.Context, request jiraProjectListRequest) (jiraProjectPageResponse, error)
+	GetProject(ctx context.Context, projectKey string) (jiraProjectResponse, error)
+	GetProjectStatuses(ctx context.Context, projectKey string) ([]jiraProjectIssueTypeStatusesResponse, error)
+	ListBoards(ctx context.Context, request jiraBoardListRequest) (jiraBoardPageResponse, error)
+	GetBoard(ctx context.Context, boardID string) (jiraBoardResponse, error)
+	ListFilters(ctx context.Context, request jiraFilterListRequest) (jiraFilterPageResponse, error)
+	GetFilter(ctx context.Context, filterID string) (jiraFilterResponse, error)
+	ListFields(ctx context.Context, request jiraFieldListRequest) (jiraFieldPageResponse, error)
+	GetField(ctx context.Context, fieldIDOrName string) (jiraFieldResponse, error)
 }
 
 type jiraClient struct {
@@ -26,6 +37,39 @@ type jiraClient struct {
 	token      string
 }
 
+type jiraIssueSearchRequest struct {
+	JQL     string
+	Fields  []string
+	Limit   int
+	StartAt int
+}
+
+type jiraProjectListRequest struct {
+	Search  string
+	Limit   int
+	StartAt int
+}
+
+type jiraBoardListRequest struct {
+	Project string
+	Type    string
+	Limit   int
+	StartAt int
+}
+
+type jiraFilterListRequest struct {
+	Search  string
+	Limit   int
+	StartAt int
+}
+
+type jiraFieldListRequest struct {
+	Search     string
+	CustomOnly bool
+	Limit      int
+	StartAt    int
+}
+
 type jiraMyselfResponse struct {
 	AccountID    string `json:"accountId,omitempty"`
 	AccountType  string `json:"accountType,omitempty"`
@@ -33,7 +77,6 @@ type jiraMyselfResponse struct {
 	DisplayName  string `json:"displayName,omitempty"`
 	EmailAddress string `json:"emailAddress,omitempty"`
 	Locale       string `json:"locale,omitempty"`
-	Self         string `json:"self,omitempty"`
 	TimeZone     string `json:"timeZone,omitempty"`
 }
 
@@ -42,8 +85,6 @@ type jiraServerInfoResponse struct {
 	BuildDate      string `json:"buildDate,omitempty"`
 	BuildNumber    int    `json:"buildNumber,omitempty"`
 	DeploymentType string `json:"deploymentType,omitempty"`
-	DisplayURL     string `json:"displayUrl,omitempty"`
-	SCMInfo        string `json:"scmInfo,omitempty"`
 	ServerTime     string `json:"serverTime,omitempty"`
 	Version        string `json:"version,omitempty"`
 	VersionNumbers []int  `json:"versionNumbers,omitempty"`
@@ -55,11 +96,137 @@ type jiraErrorResponse struct {
 	Message       string            `json:"message"`
 }
 
+type jiraUserRef struct {
+	AccountID    string `json:"accountId,omitempty"`
+	DisplayName  string `json:"displayName,omitempty"`
+	EmailAddress string `json:"emailAddress,omitempty"`
+}
+
 type jiraIssueResponse struct {
 	Fields map[string]any `json:"fields,omitempty"`
 	ID     string         `json:"id,omitempty"`
 	Key    string         `json:"key,omitempty"`
 	Self   string         `json:"self,omitempty"`
+}
+
+type jiraIssueSearchResponse struct {
+	Issues     []jiraIssueResponse `json:"issues"`
+	MaxResults int                 `json:"maxResults"`
+	StartAt    int                 `json:"startAt"`
+	Total      int                 `json:"total"`
+}
+
+type jiraCommentPageResponse struct {
+	Comments   []jiraCommentResponse `json:"comments"`
+	MaxResults int                   `json:"maxResults"`
+	StartAt    int                   `json:"startAt"`
+	Total      int                   `json:"total"`
+}
+
+type jiraCommentResponse struct {
+	Author  *jiraUserRef `json:"author,omitempty"`
+	Body    any          `json:"body,omitempty"`
+	Created string       `json:"created,omitempty"`
+	ID      string       `json:"id,omitempty"`
+	Updated string       `json:"updated,omitempty"`
+}
+
+type jiraProjectPageResponse struct {
+	MaxResults int                   `json:"maxResults"`
+	StartAt    int                   `json:"startAt"`
+	Total      int                   `json:"total"`
+	Values     []jiraProjectResponse `json:"values"`
+}
+
+type jiraProjectResponse struct {
+	Description    string       `json:"description,omitempty"`
+	ID             string       `json:"id,omitempty"`
+	Key            string       `json:"key,omitempty"`
+	Lead           *jiraUserRef `json:"lead,omitempty"`
+	Name           string       `json:"name,omitempty"`
+	ProjectTypeKey string       `json:"projectTypeKey,omitempty"`
+	Simplified     bool         `json:"simplified,omitempty"`
+	Style          string       `json:"style,omitempty"`
+	URL            string       `json:"url,omitempty"`
+}
+
+type jiraProjectIssueTypeStatusesResponse struct {
+	ID       string                  `json:"id,omitempty"`
+	Name     string                  `json:"name,omitempty"`
+	Subtask  bool                    `json:"subtask,omitempty"`
+	Statuses []jiraStatusRefResponse `json:"statuses,omitempty"`
+}
+
+type jiraStatusRefResponse struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
+type jiraBoardPageResponse struct {
+	IsLast     bool                `json:"isLast"`
+	MaxResults int                 `json:"maxResults"`
+	StartAt    int                 `json:"startAt"`
+	Total      int                 `json:"total,omitempty"`
+	Values     []jiraBoardResponse `json:"values"`
+}
+
+type jiraBoardResponse struct {
+	ID       int                        `json:"id"`
+	Location *jiraBoardLocationResponse `json:"location,omitempty"`
+	Name     string                     `json:"name,omitempty"`
+	Self     string                     `json:"self,omitempty"`
+	Type     string                     `json:"type,omitempty"`
+}
+
+type jiraBoardLocationResponse struct {
+	DisplayName string `json:"displayName,omitempty"`
+	ProjectKey  string `json:"projectKey,omitempty"`
+	ProjectName string `json:"projectName,omitempty"`
+}
+
+type jiraFilterPageResponse struct {
+	IsLast     bool                 `json:"isLast"`
+	MaxResults int                  `json:"maxResults"`
+	StartAt    int                  `json:"startAt"`
+	Total      int                  `json:"total"`
+	Values     []jiraFilterResponse `json:"values"`
+}
+
+type jiraFilterResponse struct {
+	Description string       `json:"description,omitempty"`
+	ID          string       `json:"id,omitempty"`
+	JQL         string       `json:"jql,omitempty"`
+	Name        string       `json:"name,omitempty"`
+	Owner       *jiraUserRef `json:"owner,omitempty"`
+	SearchURL   string       `json:"searchUrl,omitempty"`
+	ViewURL     string       `json:"viewUrl,omitempty"`
+}
+
+type jiraFieldPageResponse struct {
+	IsLast     bool                `json:"isLast"`
+	MaxResults int                 `json:"maxResults"`
+	StartAt    int                 `json:"startAt"`
+	Total      int                 `json:"total"`
+	Values     []jiraFieldResponse `json:"values"`
+}
+
+type jiraFieldResponse struct {
+	ClauseNames []string         `json:"clauseNames,omitempty"`
+	Custom      bool             `json:"custom,omitempty"`
+	ID          string           `json:"id,omitempty"`
+	Key         string           `json:"key,omitempty"`
+	Name        string           `json:"name,omitempty"`
+	Navigable   bool             `json:"navigable,omitempty"`
+	Orderable   bool             `json:"orderable,omitempty"`
+	Schema      *jiraFieldSchema `json:"schema,omitempty"`
+	Searchable  bool             `json:"searchable,omitempty"`
+}
+
+type jiraFieldSchema struct {
+	Custom   string `json:"custom,omitempty"`
+	CustomID int    `json:"customId,omitempty"`
+	Items    string `json:"items,omitempty"`
+	Type     string `json:"type,omitempty"`
 }
 
 func newJiraClient(config resolvedRuntimeConfig) *jiraClient {
@@ -81,19 +248,6 @@ func (client *jiraClient) GetMyself(ctx context.Context) (jiraMyselfResponse, er
 	return response, nil
 }
 
-func (client *jiraClient) GetIssue(ctx context.Context, issueKey string, fields []string) (jiraIssueResponse, error) {
-	query := url.Values{}
-	if len(fields) > 0 {
-		query.Set("fields", strings.Join(fields, ","))
-	}
-
-	var response jiraIssueResponse
-	if err := client.getJSON(ctx, "/rest/api/3/issue/"+issueKey, true, &response, query); err != nil {
-		return jiraIssueResponse{}, err
-	}
-	return response, nil
-}
-
 func (client *jiraClient) GetServerInfo(ctx context.Context) (jiraServerInfoResponse, error) {
 	var response jiraServerInfoResponse
 	if err := client.getJSON(ctx, "/rest/api/3/serverInfo", false, &response, nil); err != nil {
@@ -102,12 +256,160 @@ func (client *jiraClient) GetServerInfo(ctx context.Context) (jiraServerInfoResp
 	return response, nil
 }
 
+func (client *jiraClient) GetIssue(ctx context.Context, issueKey string, fields []string) (jiraIssueResponse, error) {
+	query := url.Values{}
+	if len(fields) > 0 {
+		query.Set("fields", strings.Join(fields, ","))
+	}
+	var response jiraIssueResponse
+	if err := client.getJSON(ctx, "/rest/api/3/issue/"+issueKey, true, &response, query); err != nil {
+		return jiraIssueResponse{}, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) SearchIssues(ctx context.Context, request jiraIssueSearchRequest) (jiraIssueSearchResponse, error) {
+	query := url.Values{}
+	query.Set("jql", request.JQL)
+	query.Set("maxResults", fmt.Sprintf("%d", request.Limit))
+	query.Set("startAt", fmt.Sprintf("%d", request.StartAt))
+	if len(request.Fields) > 0 {
+		query.Set("fields", strings.Join(request.Fields, ","))
+	}
+	var response jiraIssueSearchResponse
+	if err := client.getJSON(ctx, "/rest/api/3/search/jql", true, &response, query); err != nil {
+		return jiraIssueSearchResponse{}, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) GetIssueComments(ctx context.Context, issueKey string, startAt, limit int) (jiraCommentPageResponse, error) {
+	query := url.Values{}
+	query.Set("startAt", fmt.Sprintf("%d", startAt))
+	query.Set("maxResults", fmt.Sprintf("%d", limit))
+	var response jiraCommentPageResponse
+	if err := client.getJSON(ctx, "/rest/api/3/issue/"+issueKey+"/comment", true, &response, query); err != nil {
+		return jiraCommentPageResponse{}, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) ListProjects(ctx context.Context, request jiraProjectListRequest) (jiraProjectPageResponse, error) {
+	query := url.Values{}
+	query.Set("maxResults", fmt.Sprintf("%d", request.Limit))
+	query.Set("startAt", fmt.Sprintf("%d", request.StartAt))
+	if strings.TrimSpace(request.Search) != "" {
+		query.Set("query", request.Search)
+	}
+	var response jiraProjectPageResponse
+	if err := client.getJSON(ctx, "/rest/api/3/project/search", true, &response, query); err != nil {
+		return jiraProjectPageResponse{}, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) GetProject(ctx context.Context, projectKey string) (jiraProjectResponse, error) {
+	var response jiraProjectResponse
+	if err := client.getJSON(ctx, "/rest/api/3/project/"+projectKey, true, &response, nil); err != nil {
+		return jiraProjectResponse{}, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) GetProjectStatuses(ctx context.Context, projectKey string) ([]jiraProjectIssueTypeStatusesResponse, error) {
+	var response []jiraProjectIssueTypeStatusesResponse
+	if err := client.getJSON(ctx, "/rest/api/3/project/"+projectKey+"/statuses", true, &response, nil); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) ListBoards(ctx context.Context, request jiraBoardListRequest) (jiraBoardPageResponse, error) {
+	query := url.Values{}
+	query.Set("projectKeyOrId", request.Project)
+	query.Set("maxResults", fmt.Sprintf("%d", request.Limit))
+	query.Set("startAt", fmt.Sprintf("%d", request.StartAt))
+	if strings.TrimSpace(request.Type) != "" {
+		query.Set("type", request.Type)
+	}
+	var response jiraBoardPageResponse
+	if err := client.getJSON(ctx, "/rest/agile/1.0/board", true, &response, query); err != nil {
+		return jiraBoardPageResponse{}, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) GetBoard(ctx context.Context, boardID string) (jiraBoardResponse, error) {
+	var response jiraBoardResponse
+	if err := client.getJSON(ctx, "/rest/agile/1.0/board/"+boardID, true, &response, nil); err != nil {
+		return jiraBoardResponse{}, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) ListFilters(ctx context.Context, request jiraFilterListRequest) (jiraFilterPageResponse, error) {
+	query := url.Values{}
+	query.Set("maxResults", fmt.Sprintf("%d", request.Limit))
+	query.Set("startAt", fmt.Sprintf("%d", request.StartAt))
+	if strings.TrimSpace(request.Search) != "" {
+		query.Set("filterName", request.Search)
+	}
+	var response jiraFilterPageResponse
+	if err := client.getJSON(ctx, "/rest/api/3/filter/search", true, &response, query); err != nil {
+		return jiraFilterPageResponse{}, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) GetFilter(ctx context.Context, filterID string) (jiraFilterResponse, error) {
+	var response jiraFilterResponse
+	if err := client.getJSON(ctx, "/rest/api/3/filter/"+filterID, true, &response, nil); err != nil {
+		return jiraFilterResponse{}, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) ListFields(ctx context.Context, request jiraFieldListRequest) (jiraFieldPageResponse, error) {
+	query := url.Values{}
+	query.Set("maxResults", fmt.Sprintf("%d", request.Limit))
+	query.Set("startAt", fmt.Sprintf("%d", request.StartAt))
+	if strings.TrimSpace(request.Search) != "" {
+		query.Set("query", request.Search)
+	}
+	if request.CustomOnly {
+		query.Set("type", "custom")
+	}
+	var response jiraFieldPageResponse
+	if err := client.getJSON(ctx, "/rest/api/3/field/search", true, &response, query); err != nil {
+		return jiraFieldPageResponse{}, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) GetField(ctx context.Context, fieldIDOrName string) (jiraFieldResponse, error) {
+	var response []jiraFieldResponse
+	if err := client.getJSON(ctx, "/rest/api/3/field", true, &response, nil); err != nil {
+		return jiraFieldResponse{}, err
+	}
+	needle := strings.TrimSpace(fieldIDOrName)
+	for _, field := range response {
+		if field.ID == needle || field.Key == needle || strings.EqualFold(field.Name, needle) {
+			return field, nil
+		}
+		for _, clauseName := range field.ClauseNames {
+			if strings.EqualFold(clauseName, needle) {
+				return field, nil
+			}
+		}
+	}
+	return jiraFieldResponse{}, fmt.Errorf("field not found: %s", fieldIDOrName)
+}
+
 func (client *jiraClient) getJSON(ctx context.Context, path string, requireAuth bool, target any, query url.Values) error {
 	endpoint, err := url.JoinPath(client.baseURL, path)
 	if err != nil {
 		return fmt.Errorf("build Jira URL for %s: %w", path, err)
 	}
-
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return fmt.Errorf("create Jira request for %s: %w", path, err)
@@ -120,17 +422,14 @@ func (client *jiraClient) getJSON(ctx context.Context, path string, requireAuth 
 	if requireAuth || (client.email != "" && client.token != "") {
 		request.SetBasicAuth(client.email, client.token)
 	}
-
 	response, err := client.httpClient.Do(request)
 	if err != nil {
 		return fmt.Errorf("request Jira %s: %w", path, err)
 	}
 	defer response.Body.Close()
-
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		return readJiraError(path, response)
 	}
-
 	if err := json.NewDecoder(response.Body).Decode(target); err != nil {
 		return fmt.Errorf("decode Jira response for %s: %w", path, err)
 	}
@@ -142,7 +441,6 @@ func readJiraError(path string, response *http.Response) error {
 	if err != nil {
 		return fmt.Errorf("jira %s failed with status %d; additionally failed to read body: %w", path, response.StatusCode, err)
 	}
-
 	var parsed jiraErrorResponse
 	if jsonErr := json.Unmarshal(body, &parsed); jsonErr == nil {
 		message := collapseJiraErrors(parsed)
@@ -150,7 +448,6 @@ func readJiraError(path string, response *http.Response) error {
 			return fmt.Errorf("jira %s failed with status %d: %s", path, response.StatusCode, message)
 		}
 	}
-
 	trimmed := strings.TrimSpace(string(body))
 	if trimmed == "" {
 		return fmt.Errorf("jira %s failed with status %d", path, response.StatusCode)
@@ -175,128 +472,4 @@ func collapseJiraErrors(value jiraErrorResponse) string {
 		}
 	}
 	return strings.Join(parts, "; ")
-}
-
-func renderMeText(value jiraMyselfResponse) string {
-	var lines []string
-	lines = append(lines, fmt.Sprintf("display_name: %s", value.DisplayName))
-	if value.EmailAddress != "" {
-		lines = append(lines, fmt.Sprintf("email: %s", value.EmailAddress))
-	}
-	if value.AccountID != "" {
-		lines = append(lines, fmt.Sprintf("account_id: %s", value.AccountID))
-	}
-	if value.AccountType != "" {
-		lines = append(lines, fmt.Sprintf("account_type: %s", value.AccountType))
-	}
-	lines = append(lines, fmt.Sprintf("active: %t", value.Active))
-	if value.Locale != "" {
-		lines = append(lines, fmt.Sprintf("locale: %s", value.Locale))
-	}
-	if value.TimeZone != "" {
-		lines = append(lines, fmt.Sprintf("time_zone: %s", value.TimeZone))
-	}
-	if value.Self != "" {
-		lines = append(lines, fmt.Sprintf("self: %s", value.Self))
-	}
-	return strings.Join(lines, "\n")
-}
-
-func renderServerInfoText(value jiraServerInfoResponse) string {
-	var lines []string
-	if value.BaseURL != "" {
-		lines = append(lines, fmt.Sprintf("base_url: %s", value.BaseURL))
-	}
-	if value.DisplayURL != "" {
-		lines = append(lines, fmt.Sprintf("display_url: %s", value.DisplayURL))
-	}
-	if value.DeploymentType != "" {
-		lines = append(lines, fmt.Sprintf("deployment_type: %s", value.DeploymentType))
-	}
-	if value.Version != "" {
-		lines = append(lines, fmt.Sprintf("version: %s", value.Version))
-	}
-	if len(value.VersionNumbers) > 0 {
-		var parts []string
-		for _, number := range value.VersionNumbers {
-			parts = append(parts, fmt.Sprintf("%d", number))
-		}
-		lines = append(lines, fmt.Sprintf("version_numbers: %s", strings.Join(parts, ".")))
-	}
-	if value.BuildNumber != 0 {
-		lines = append(lines, fmt.Sprintf("build_number: %d", value.BuildNumber))
-	}
-	if value.BuildDate != "" {
-		lines = append(lines, fmt.Sprintf("build_date: %s", value.BuildDate))
-	}
-	if value.ServerTime != "" {
-		lines = append(lines, fmt.Sprintf("server_time: %s", value.ServerTime))
-	}
-	if value.SCMInfo != "" {
-		lines = append(lines, fmt.Sprintf("scm_info: %s", value.SCMInfo))
-	}
-	return strings.Join(lines, "\n")
-}
-
-func renderIssueText(value jiraIssueResponse, fields []string) string {
-	var lines []string
-	if value.Key != "" {
-		lines = append(lines, fmt.Sprintf("key: %s", value.Key))
-	}
-	if value.ID != "" {
-		lines = append(lines, fmt.Sprintf("id: %s", value.ID))
-	}
-	for _, field := range fields {
-		field = strings.TrimSpace(field)
-		if field == "" {
-			continue
-		}
-		fieldValue, ok := value.Fields[field]
-		if !ok {
-			continue
-		}
-		lines = append(lines, fmt.Sprintf("%s: %s", field, renderFieldValue(fieldValue)))
-	}
-	if value.Self != "" {
-		lines = append(lines, fmt.Sprintf("self: %s", value.Self))
-	}
-	return strings.Join(lines, "\n")
-}
-
-func renderFieldValue(value any) string {
-	switch typed := value.(type) {
-	case nil:
-		return "null"
-	case string:
-		return typed
-	case bool:
-		if typed {
-			return "true"
-		}
-		return "false"
-	case float64:
-		return fmt.Sprintf("%v", typed)
-	case []any:
-		if len(typed) == 0 {
-			return "[]"
-		}
-		parts := make([]string, 0, len(typed))
-		for _, item := range typed {
-			parts = append(parts, renderFieldValue(item))
-		}
-		return strings.Join(parts, ", ")
-	case map[string]any:
-		for _, key := range []string{"displayName", "name", "value", "key", "id"} {
-			if preferred, ok := typed[key]; ok {
-				return renderFieldValue(preferred)
-			}
-		}
-		encoded, err := json.Marshal(typed)
-		if err != nil {
-			return fmt.Sprintf("%v", typed)
-		}
-		return string(encoded)
-	default:
-		return fmt.Sprintf("%v", typed)
-	}
 }
