@@ -22,6 +22,7 @@ The binary is `jira`.
 2. Prefer extending help text and tests together when changing CLI behavior.
 3. Avoid overspecifying usage in repo docs when `jira --help` can carry the contract directly.
 4. Keep installation simple: local binary at `/Users/vabole/.local/bin/jira`.
+5. Keep `Formula/jira.rb` and the README install/update instructions aligned when changing packaging.
 
 ## Historical Reference
 

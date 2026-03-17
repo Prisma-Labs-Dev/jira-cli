@@ -29,6 +29,69 @@ make install-local
 
 This builds the local binary to `/Users/vabole/.local/bin/jira`.
 
+## Install With Homebrew
+
+This repo stays private. Homebrew now expects formulae to be installed from a tap, so the supported path is a private tap backed by this repository.
+
+```bash
+cd /path/to/private/jira-cli
+brew tap prisma-labs-dev/jira-cli "$(pwd)"
+brew install --HEAD prisma-labs-dev/jira-cli/jira
+brew test jira
+```
+
+This uses the committed `Formula/jira.rb` and builds `jira` from the tapped private repo contents.
+
+If Homebrew reports that `/opt/homebrew/bin/jira` is already owned by another formula such as `jira-cli`, unlink the conflicting formula first:
+
+```bash
+brew unlink jira-cli
+brew install --HEAD prisma-labs-dev/jira-cli/jira
+```
+
+If your team wants a more standard Homebrew UX without making the source public, you can also use this repo as a private tap:
+
+```bash
+export HOMEBREW_GITHUB_API_TOKEN="ghp_..."
+brew tap Prisma-Labs-Dev/jira-cli https://github.com/Prisma-Labs-Dev/jira-cli.git
+brew install --HEAD Prisma-Labs-Dev/jira-cli/jira
+```
+
+That still keeps the repository private; users just need GitHub access plus a token or SSH auth that can read the repo.
+
+## Update Local Install
+
+To update an existing local install, pull the latest changes and rebuild the binary in place:
+
+```bash
+cd /Users/vabole/repos/jira-cli
+git pull --ff-only
+make install-local
+make verify-local
+```
+
+This replaces `/Users/vabole/.local/bin/jira` with the current build from the repository.
+
+## Update Homebrew Install
+
+If you installed from a private checkout, update it like this:
+
+```bash
+cd /path/to/private/jira-cli
+git pull --ff-only
+brew tap prisma-labs-dev/jira-cli "$(pwd)"
+brew upgrade --fetch-HEAD prisma-labs-dev/jira-cli/jira || brew reinstall --HEAD prisma-labs-dev/jira-cli/jira
+brew test jira
+```
+
+If you installed from the private tap, update with normal Homebrew flow:
+
+```bash
+brew update
+brew upgrade --fetch-HEAD Prisma-Labs-Dev/jira-cli/jira
+brew test jira
+```
+
 ## Start With Help
 
 ```bash

@@ -1,4 +1,6 @@
-.PHONY: lint test test-live test-live-bw install-local verify-local ci
+.PHONY: lint test test-live test-live-bw install-local verify-local brew-tap-local brew-install-local brew-reinstall-local brew-test-local ci
+
+BREW_TAP=prisma-labs-dev/jira-cli
 
 lint:
 	./scripts/lint.sh
@@ -22,6 +24,20 @@ verify-local:
 	/Users/vabole/.local/bin/jira issue search --help >/dev/null
 	/Users/vabole/.local/bin/jira project list --help >/dev/null
 	/Users/vabole/.local/bin/jira field list --help >/dev/null
+
+brew-install-local:
+	$(MAKE) brew-tap-local
+	brew install --HEAD $(BREW_TAP)/jira
+
+brew-reinstall-local:
+	$(MAKE) brew-tap-local
+	brew reinstall --HEAD $(BREW_TAP)/jira
+
+brew-test-local:
+	brew test jira
+
+brew-tap-local:
+	brew tap $(BREW_TAP) $(CURDIR)
 
 ci:
 	$(MAKE) lint
