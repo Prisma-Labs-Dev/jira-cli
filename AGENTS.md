@@ -23,6 +23,12 @@ The binary is `jira`.
 3. Avoid overspecifying usage in repo docs when `jira --help` can carry the contract directly.
 4. Keep installation simple: local binary at `/Users/vabole/.local/bin/jira`.
 
+## Historical Reference
+
+- `AGENT_PROMPT.md` is committed as an archival copy of the original design brief for this overhaul.
+- Treat it as background context, not the live contract.
+- The authoritative current contract remains the CLI help surfaces plus committed tests and goldens.
+
 ## Live Jira Validation
 
 - Prefer env-driven live validation over checked-in local config.

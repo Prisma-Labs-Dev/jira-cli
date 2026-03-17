@@ -4,6 +4,12 @@ Agent-first Jira CLI with explicit commands, compact default output, stable `--j
 
 The binary name is `jira`.
 
+## Historical Reference
+
+The original implementation brief that drove this repo overhaul is archived in `AGENT_PROMPT.md`.
+
+Use it as design history and context for future agent work, but treat `jira --help`, subcommand help, and the committed tests/goldens as the current contract.
+
 ## Principles
 
 - explicit commands over shortcut-heavy UX
