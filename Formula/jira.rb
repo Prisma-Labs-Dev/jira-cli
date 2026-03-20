@@ -12,7 +12,7 @@ class Jira < Formula
   end
 
   test do
-    assert_match "Agent-first Jira CLI", shell_output("#{bin}/jira --help")
+    assert_match "agent-first Jira CLI", shell_output("#{bin}/jira --help")
     assert_match "issue search", shell_output("#{bin}/jira issue search --help")
   end
 end
