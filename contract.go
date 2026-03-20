@@ -84,6 +84,50 @@ type boardItem struct {
 	Self         string `json:"self,omitempty"`
 }
 
+type boardSprintItem struct {
+	ID            int    `json:"id"`
+	Name          string `json:"name,omitempty"`
+	State         string `json:"state,omitempty"`
+	StartDate     string `json:"startDate,omitempty"`
+	EndDate       string `json:"endDate,omitempty"`
+	CompleteDate  string `json:"completeDate,omitempty"`
+	CreatedDate   string `json:"createdDate,omitempty"`
+	Goal          string `json:"goal,omitempty"`
+	OriginBoardID int    `json:"originBoardId,omitempty"`
+}
+
+type boardSnapshotSourceItem struct {
+	Type   string           `json:"type"`
+	Sprint *boardSprintItem `json:"sprint,omitempty"`
+}
+
+type boardStatusCountItem struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
+}
+
+type boardSnapshotTotals struct {
+	TotalIssues int `json:"totalIssues"`
+	MyIssues    int `json:"myIssues,omitempty"`
+}
+
+type boardSnapshotUserItem struct {
+	AccountID    string `json:"accountId,omitempty"`
+	DisplayName  string `json:"displayName,omitempty"`
+	EmailAddress string `json:"emailAddress,omitempty"`
+}
+
+type boardSnapshotItem struct {
+	Board        boardItem               `json:"board"`
+	Source       boardSnapshotSourceItem `json:"source"`
+	Totals       boardSnapshotTotals     `json:"totals"`
+	StatusCounts []boardStatusCountItem  `json:"statusCounts"`
+	Issues       []issueItem             `json:"issues"`
+	Page         pageDescriptor          `json:"page"`
+	Me           *boardSnapshotUserItem  `json:"me,omitempty"`
+	MyIssues     []issueItem             `json:"myIssues,omitempty"`
+}
+
 type filterItem struct {
 	ID          string `json:"id,omitempty"`
 	Name        string `json:"name,omitempty"`
@@ -166,6 +210,43 @@ func projectStatusesSchema() schemaDescriptor {
 
 func boardSchema(itemType string) schemaDescriptor {
 	return schemaDescriptor{ItemType: itemType, Fields: []string{"id", "name", "type", "projectKey", "projectName", "locationName"}}
+}
+
+func boardSnapshotSchema() schemaDescriptor {
+	fields := []string{
+		"board.id",
+		"board.name",
+		"board.type",
+		"board.projectKey",
+		"board.projectName",
+		"source.type",
+		"source.sprint.id",
+		"source.sprint.name",
+		"source.sprint.state",
+		"source.sprint.goal",
+		"totals.totalIssues",
+		"totals.myIssues",
+		"statusCounts.name",
+		"statusCounts.count",
+		"issues.key",
+	}
+	for _, field := range boardSnapshotIssueFields() {
+		fields = append(fields, "issues.fields."+field)
+	}
+	fields = append(fields,
+		"page.limit",
+		"page.startAt",
+		"page.returned",
+		"page.total",
+		"page.nextStartAt",
+		"me.displayName",
+		"me.accountId",
+		"myIssues.key",
+	)
+	for _, field := range boardSnapshotIssueFields() {
+		fields = append(fields, "myIssues.fields."+field)
+	}
+	return schemaDescriptor{ItemType: "board-snapshot", Fields: fields}
 }
 
 func filterSchema(itemType string) schemaDescriptor {
@@ -276,6 +357,20 @@ func boardToItem(board jiraBoardResponse) boardItem {
 		item.LocationName = board.Location.DisplayName
 	}
 	return item
+}
+
+func sprintToItem(sprint jiraSprintResponse) *boardSprintItem {
+	return &boardSprintItem{
+		ID:            sprint.ID,
+		Name:          sprint.Name,
+		State:         sprint.State,
+		StartDate:     sprint.StartDate,
+		EndDate:       sprint.EndDate,
+		CompleteDate:  sprint.CompleteDate,
+		CreatedDate:   sprint.CreatedDate,
+		Goal:          sprint.Goal,
+		OriginBoardID: sprint.OriginBoardID,
+	}
 }
 
 func filterToItem(filter jiraFilterResponse) filterItem {

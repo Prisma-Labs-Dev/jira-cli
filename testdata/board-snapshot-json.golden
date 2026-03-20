@@ -1,0 +1,116 @@
+{
+  "item": {
+    "board": {
+      "id": 7,
+      "name": "Warehouse Board",
+      "type": "scrum",
+      "projectKey": "SCWI",
+      "projectName": "Warehouse Inbound",
+      "locationName": "Warehouse"
+    },
+    "source": {
+      "type": "active-sprint",
+      "sprint": {
+        "id": 42,
+        "name": "Sprint 1",
+        "state": "active",
+        "goal": "Ship slotting fixes",
+        "originBoardId": 7
+      }
+    },
+    "totals": {
+      "totalIssues": 2,
+      "myIssues": 1
+    },
+    "statusCounts": [
+      {
+        "name": "Progress",
+        "count": 1
+      },
+      {
+        "name": "To Do",
+        "count": 1
+      }
+    ],
+    "issues": [
+      {
+        "id": "10001",
+        "key": "SCWI-336",
+        "fields": {
+          "assignee": "Agent User",
+          "issuetype": "Story",
+          "priority": "Normal",
+          "status": "Progress",
+          "summary": "Move product dialog",
+          "updated": "2026-03-20T09:00:00.000Z"
+        }
+      }
+    ],
+    "page": {
+      "limit": 1,
+      "returned": 1,
+      "total": 2,
+      "nextStartAt": 1,
+      "nextHint": "use --start-at 1"
+    },
+    "me": {
+      "accountId": "abc-123",
+      "displayName": "Agent User",
+      "emailAddress": "agent@example.com"
+    },
+    "myIssues": [
+      {
+        "id": "10001",
+        "key": "SCWI-336",
+        "fields": {
+          "assignee": "Agent User",
+          "issuetype": "Story",
+          "priority": "Normal",
+          "status": "Progress",
+          "summary": "Move product dialog",
+          "updated": "2026-03-20T09:00:00.000Z"
+        }
+      }
+    ]
+  },
+  "schema": {
+    "itemType": "board-snapshot",
+    "fields": [
+      "board.id",
+      "board.name",
+      "board.type",
+      "board.projectKey",
+      "board.projectName",
+      "source.type",
+      "source.sprint.id",
+      "source.sprint.name",
+      "source.sprint.state",
+      "source.sprint.goal",
+      "totals.totalIssues",
+      "totals.myIssues",
+      "statusCounts.name",
+      "statusCounts.count",
+      "issues.key",
+      "issues.fields.summary",
+      "issues.fields.status",
+      "issues.fields.assignee",
+      "issues.fields.priority",
+      "issues.fields.issuetype",
+      "issues.fields.updated",
+      "page.limit",
+      "page.startAt",
+      "page.returned",
+      "page.total",
+      "page.nextStartAt",
+      "me.displayName",
+      "me.accountId",
+      "myIssues.key",
+      "myIssues.fields.summary",
+      "myIssues.fields.status",
+      "myIssues.fields.assignee",
+      "myIssues.fields.priority",
+      "myIssues.fields.issuetype",
+      "myIssues.fields.updated"
+    ]
+  }
+}

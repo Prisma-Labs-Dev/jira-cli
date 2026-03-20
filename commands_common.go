@@ -79,6 +79,16 @@ type boardGetOptions struct {
 	id string
 }
 
+type boardSnapshotOptions struct {
+	commandOptions
+	paginationOptions
+	boardID      string
+	boardType    string
+	defaultBoard bool
+	me           bool
+	project      string
+}
+
 type filterListOptions struct {
 	commandOptions
 	paginationOptions

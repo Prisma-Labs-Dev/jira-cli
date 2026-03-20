@@ -97,6 +97,7 @@ brew test jira
 ```bash
 jira --help
 jira issue search --help
+jira board snapshot --help
 jira project list --help
 jira field list --help
 ```
@@ -115,6 +116,7 @@ Current read-oriented scope:
 - `jira project statuses`
 - `jira board list`
 - `jira board get`
+- `jira board snapshot`
 - `jira filter list`
 - `jira filter get`
 - `jira field list`
@@ -163,6 +165,8 @@ jira issue search --project SCWI --status "In Progress"
 jira issue comments SCWI-282 --limit 20 --json
 jira project list --limit 25 --json
 jira board list --project SCWI
+jira board snapshot --project SCWI --type scrum --me --json
+jira board snapshot --default --me --json
 jira filter get 10001 --json
 jira field list --custom-only --search warehouse
 ```
@@ -198,6 +202,24 @@ The CLI always resolves credentials in this order:
 3. `~/.config/jira/config.json`
 
 For live testing, future agents should prefer short-lived env vars over committing config files.
+
+### Default Board
+
+`jira board snapshot --default` resolves the board id from:
+
+1. `JIRA_DEFAULT_BOARD`
+2. `defaultBoardId` in `~/.config/jira/config.json`
+
+Example config:
+
+```json
+{
+  "site": "https://jira-eu-aholddelhaize.atlassian.net",
+  "email": "agent@example.com",
+  "token": "...",
+  "defaultBoardId": "13264"
+}
+```
 
 ### Future Agent Workflow
 

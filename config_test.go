@@ -83,6 +83,19 @@ func TestResolveRuntimeConfigUsesDefaultConfigPathWhenPresent(t *testing.T) {
 	}
 }
 
+func TestResolveRuntimeConfigUsesDefaultBoardFromConfigAndEnv(t *testing.T) {
+	configPath := writeConfigFile(t, t.TempDir(), `{"site":"https://config.atlassian.net","email":"config@example.com","token":"config-token","defaultBoardId":"42"}`)
+	env := map[string]string{"JIRA_DEFAULT_BOARD": "99"}
+
+	resolved, err := resolveRuntimeConfig(commandOptions{configPath: configPath}, testConfigEnvironment(t, env))
+	if err != nil {
+		t.Fatalf("resolve config: %v", err)
+	}
+	if resolved.defaultBoardID != "99" {
+		t.Fatalf("expected env default board override, got %+v", resolved)
+	}
+}
+
 func TestResolveRuntimeConfigRejectsUnknownConfigFields(t *testing.T) {
 	configPath := writeConfigFile(t, t.TempDir(), `{"site":"https://config.atlassian.net","unexpected":"value"}`)
 

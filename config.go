@@ -14,16 +14,18 @@ import (
 const defaultConfigRelativePath = ".config/jira/config.json"
 
 type fileConfig struct {
-	Email string `json:"email"`
-	Site  string `json:"site"`
-	Token string `json:"token"`
+	DefaultBoardID string `json:"defaultBoardId"`
+	Email          string `json:"email"`
+	Site           string `json:"site"`
+	Token          string `json:"token"`
 }
 
 type resolvedRuntimeConfig struct {
-	configPath string
-	email      string
-	site       string
-	token      string
+	configPath     string
+	defaultBoardID string
+	email          string
+	site           string
+	token          string
 }
 
 type configRequirements struct {
@@ -60,11 +62,15 @@ func resolveRuntimeConfig(options commandOptions, env configEnvironment) (resolv
 			return resolved, err
 		}
 		resolved.configPath = configPath
+		resolved.defaultBoardID = strings.TrimSpace(parsed.DefaultBoardID)
 		resolved.site = strings.TrimSpace(parsed.Site)
 		resolved.email = strings.TrimSpace(parsed.Email)
 		resolved.token = strings.TrimSpace(parsed.Token)
 	}
 
+	if value, ok := firstEnv(env, "JIRA_DEFAULT_BOARD"); ok {
+		resolved.defaultBoardID = value
+	}
 	if value, ok := firstEnv(env, "JIRA_SITE", "JIRA_BASE_URL"); ok {
 		resolved.site = value
 	}

@@ -24,6 +24,9 @@ type jiraAPI interface {
 	GetProjectStatuses(ctx context.Context, projectKey string) ([]jiraProjectIssueTypeStatusesResponse, error)
 	ListBoards(ctx context.Context, request jiraBoardListRequest) (jiraBoardPageResponse, error)
 	GetBoard(ctx context.Context, boardID string) (jiraBoardResponse, error)
+	ListBoardSprints(ctx context.Context, boardID string, request jiraSprintListRequest) (jiraSprintPageResponse, error)
+	ListBoardIssues(ctx context.Context, boardID string, request jiraAgileIssueListRequest) (jiraIssueSearchResponse, error)
+	ListSprintIssues(ctx context.Context, sprintID string, request jiraAgileIssueListRequest) (jiraIssueSearchResponse, error)
 	ListFilters(ctx context.Context, request jiraFilterListRequest) (jiraFilterPageResponse, error)
 	GetFilter(ctx context.Context, filterID string) (jiraFilterResponse, error)
 	ListFields(ctx context.Context, request jiraFieldListRequest) (jiraFieldPageResponse, error)
@@ -53,6 +56,18 @@ type jiraProjectListRequest struct {
 type jiraBoardListRequest struct {
 	Project string
 	Type    string
+	Limit   int
+	StartAt int
+}
+
+type jiraSprintListRequest struct {
+	States  []string
+	Limit   int
+	StartAt int
+}
+
+type jiraAgileIssueListRequest struct {
+	Fields  []string
 	Limit   int
 	StartAt int
 }
@@ -182,6 +197,27 @@ type jiraBoardLocationResponse struct {
 	DisplayName string `json:"displayName,omitempty"`
 	ProjectKey  string `json:"projectKey,omitempty"`
 	ProjectName string `json:"projectName,omitempty"`
+}
+
+type jiraSprintPageResponse struct {
+	IsLast     bool                 `json:"isLast"`
+	MaxResults int                  `json:"maxResults"`
+	StartAt    int                  `json:"startAt"`
+	Total      int                  `json:"total,omitempty"`
+	Values     []jiraSprintResponse `json:"values"`
+}
+
+type jiraSprintResponse struct {
+	ID            int    `json:"id"`
+	Name          string `json:"name,omitempty"`
+	State         string `json:"state,omitempty"`
+	Self          string `json:"self,omitempty"`
+	StartDate     string `json:"startDate,omitempty"`
+	EndDate       string `json:"endDate,omitempty"`
+	CompleteDate  string `json:"completeDate,omitempty"`
+	CreatedDate   string `json:"createdDate,omitempty"`
+	Goal          string `json:"goal,omitempty"`
+	OriginBoardID int    `json:"originBoardId,omitempty"`
 }
 
 type jiraFilterPageResponse struct {
@@ -343,6 +379,48 @@ func (client *jiraClient) GetBoard(ctx context.Context, boardID string) (jiraBoa
 	var response jiraBoardResponse
 	if err := client.getJSON(ctx, "/rest/agile/1.0/board/"+boardID, true, &response, nil); err != nil {
 		return jiraBoardResponse{}, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) ListBoardSprints(ctx context.Context, boardID string, request jiraSprintListRequest) (jiraSprintPageResponse, error) {
+	query := url.Values{}
+	query.Set("maxResults", fmt.Sprintf("%d", request.Limit))
+	query.Set("startAt", fmt.Sprintf("%d", request.StartAt))
+	if len(request.States) > 0 {
+		query.Set("state", strings.Join(request.States, ","))
+	}
+	var response jiraSprintPageResponse
+	if err := client.getJSON(ctx, "/rest/agile/1.0/board/"+boardID+"/sprint", true, &response, query); err != nil {
+		return jiraSprintPageResponse{}, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) ListBoardIssues(ctx context.Context, boardID string, request jiraAgileIssueListRequest) (jiraIssueSearchResponse, error) {
+	query := url.Values{}
+	query.Set("maxResults", fmt.Sprintf("%d", request.Limit))
+	query.Set("startAt", fmt.Sprintf("%d", request.StartAt))
+	if len(request.Fields) > 0 {
+		query.Set("fields", strings.Join(request.Fields, ","))
+	}
+	var response jiraIssueSearchResponse
+	if err := client.getJSON(ctx, "/rest/agile/1.0/board/"+boardID+"/issue", true, &response, query); err != nil {
+		return jiraIssueSearchResponse{}, err
+	}
+	return response, nil
+}
+
+func (client *jiraClient) ListSprintIssues(ctx context.Context, sprintID string, request jiraAgileIssueListRequest) (jiraIssueSearchResponse, error) {
+	query := url.Values{}
+	query.Set("maxResults", fmt.Sprintf("%d", request.Limit))
+	query.Set("startAt", fmt.Sprintf("%d", request.StartAt))
+	if len(request.Fields) > 0 {
+		query.Set("fields", strings.Join(request.Fields, ","))
+	}
+	var response jiraIssueSearchResponse
+	if err := client.getJSON(ctx, "/rest/agile/1.0/sprint/"+sprintID+"/issue", true, &response, query); err != nil {
+		return jiraIssueSearchResponse{}, err
 	}
 	return response, nil
 }

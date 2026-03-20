@@ -22,6 +22,7 @@ verify-local:
 	test -x /Users/vabole/.local/bin/jira
 	/Users/vabole/.local/bin/jira --help >/dev/null
 	/Users/vabole/.local/bin/jira issue search --help >/dev/null
+	/Users/vabole/.local/bin/jira board snapshot --help >/dev/null
 	/Users/vabole/.local/bin/jira project list --help >/dev/null
 	/Users/vabole/.local/bin/jira field list --help >/dev/null
 

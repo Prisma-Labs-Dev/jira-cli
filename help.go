@@ -32,6 +32,7 @@ Examples:
   jira issue search --jql 'project = SCWI ORDER BY updated DESC' --limit 25 --json
   jira project list --limit 25
   jira board list --project SCWI --json
+  jira board snapshot --default --me --json
   jira filter list --limit 20
   jira field list --custom-only --search warehouse --json`
 
@@ -302,10 +303,12 @@ Usage:
 Commands:
   list        List boards for a project
   get         Fetch one board by id
+  snapshot    Summarize a board for board-status questions
 
 Examples:
   jira board list --project SCWI
-  jira board get 123 --json`
+  jira board get 123 --json
+  jira board snapshot --default --me --json`
 
 const boardListHelp = `jira board list
 
@@ -358,6 +361,61 @@ Output:
 Examples:
   jira board get 123
   jira board get 123 --json`
+
+const boardSnapshotHelp = `jira board snapshot
+
+Purpose:
+  Summarize a board in one call so agents can answer “what is on my board?” quickly.
+
+Usage:
+  jira board snapshot [flags]
+
+Flags:
+  --board <id>           Board id to summarize
+  --config <path>        Optional config file path
+  --default              Use the configured default board
+  --email <value>        Jira user email override
+  --json                 Print a stable JSON envelope
+  --limit <n>            Max issues to return in the snapshot issue list (default: 50)
+  --me                   Include issues assigned to the authenticated user
+  --project <key>        Resolve a single board from a project key or id
+  --site <url>           Jira base URL override
+  --start-at <n>         Offset for the snapshot issue list (default: 0)
+  --token <value>        Jira API token override
+  --type <value>         Optional board type when resolving via --project
+  -h, --help             Show this help
+
+Output:
+  Text: board summary, scope (active sprint when present), status counts, current-user issues, and a compact issue table.
+  JSON: {
+    "item": {
+      "board": { ... },
+      "source": { "type": "active-sprint" | "board", "sprint": { ... } },
+      "totals": { "totalIssues": 27, "myIssues": 2 },
+      "statusCounts": [{ "name": "Done", "count": 14 }],
+      "issues": [...],
+      "page": { ... },
+      "me": { ... },
+      "myIssues": [...]
+    },
+    "schema": { "itemType": "board-snapshot", ... }
+  }
+
+Resolution:
+  Choose exactly one board selector:
+  --board <id>
+  --project <key> [--type scrum|kanban]
+  --default (uses JIRA_DEFAULT_BOARD or defaultBoardId in ~/.config/jira/config.json)
+
+Notes:
+  Scrum boards prefer the active sprint when one exists.
+  Kanban boards and sprint-less scrum boards summarize the board issue feed.
+  Status counts are computed across the full scoped issue set, while --limit and --start-at page only the returned issues list.
+
+Examples:
+  jira board snapshot --board 13264
+  jira board snapshot --project SCWI --type scrum --json
+  jira board snapshot --default --me --json`
 
 const filterHelp = `jira filter - explicit saved-filter discovery commands
 

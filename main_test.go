@@ -17,6 +17,7 @@ func TestRunHelpSurfacesMatchGolden(t *testing.T) {
 	}{
 		{name: "root", argv: nil, goldenPath: "testdata/root-help.golden"},
 		{name: "issue-search-help", argv: []string{"issue", "search", "--help"}, goldenPath: "testdata/issue-search-help.golden"},
+		{name: "board-snapshot-help", argv: []string{"board", "snapshot", "--help"}, goldenPath: "testdata/board-snapshot-help.golden"},
 	}
 
 	for _, tc := range cases {
@@ -487,34 +488,40 @@ func runForTest(argv []string) (string, string, int) {
 }
 
 type stubJiraAPI struct {
-	issue        jiraIssueResponse
-	issueErr     error
-	searchIssues jiraIssueSearchResponse
-	searchErr    error
-	comments     jiraCommentPageResponse
-	commentsErr  error
-	myself       jiraMyselfResponse
-	myselfErr    error
-	serverInfo   jiraServerInfoResponse
-	serverErr    error
-	projects     jiraProjectPageResponse
-	projectsErr  error
-	project      jiraProjectResponse
-	projectErr   error
-	statuses     []jiraProjectIssueTypeStatusesResponse
-	statusesErr  error
-	boards       jiraBoardPageResponse
-	boardsErr    error
-	board        jiraBoardResponse
-	boardErr     error
-	filters      jiraFilterPageResponse
-	filtersErr   error
-	filter       jiraFilterResponse
-	filterErr    error
-	fields       jiraFieldPageResponse
-	fieldsErr    error
-	field        jiraFieldResponse
-	fieldErr     error
+	issue           jiraIssueResponse
+	issueErr        error
+	searchIssues    jiraIssueSearchResponse
+	searchErr       error
+	comments        jiraCommentPageResponse
+	commentsErr     error
+	myself          jiraMyselfResponse
+	myselfErr       error
+	serverInfo      jiraServerInfoResponse
+	serverErr       error
+	projects        jiraProjectPageResponse
+	projectsErr     error
+	project         jiraProjectResponse
+	projectErr      error
+	statuses        []jiraProjectIssueTypeStatusesResponse
+	statusesErr     error
+	boards          jiraBoardPageResponse
+	boardsErr       error
+	board           jiraBoardResponse
+	boardErr        error
+	sprints         jiraSprintPageResponse
+	sprintsErr      error
+	boardIssues     jiraIssueSearchResponse
+	boardIssuesErr  error
+	sprintIssues    jiraIssueSearchResponse
+	sprintIssuesErr error
+	filters         jiraFilterPageResponse
+	filtersErr      error
+	filter          jiraFilterResponse
+	filterErr       error
+	fields          jiraFieldPageResponse
+	fieldsErr       error
+	field           jiraFieldResponse
+	fieldErr        error
 }
 
 func (stub stubJiraAPI) GetIssue(_ context.Context, _ string, _ []string) (jiraIssueResponse, error) {
@@ -585,6 +592,27 @@ func (stub stubJiraAPI) GetBoard(_ context.Context, _ string) (jiraBoardResponse
 		return jiraBoardResponse{}, stub.boardErr
 	}
 	return stub.board, nil
+}
+
+func (stub stubJiraAPI) ListBoardSprints(_ context.Context, _ string, _ jiraSprintListRequest) (jiraSprintPageResponse, error) {
+	if stub.sprintsErr != nil {
+		return jiraSprintPageResponse{}, stub.sprintsErr
+	}
+	return stub.sprints, nil
+}
+
+func (stub stubJiraAPI) ListBoardIssues(_ context.Context, _ string, _ jiraAgileIssueListRequest) (jiraIssueSearchResponse, error) {
+	if stub.boardIssuesErr != nil {
+		return jiraIssueSearchResponse{}, stub.boardIssuesErr
+	}
+	return stub.boardIssues, nil
+}
+
+func (stub stubJiraAPI) ListSprintIssues(_ context.Context, _ string, _ jiraAgileIssueListRequest) (jiraIssueSearchResponse, error) {
+	if stub.sprintIssuesErr != nil {
+		return jiraIssueSearchResponse{}, stub.sprintIssuesErr
+	}
+	return stub.sprintIssues, nil
 }
 
 func (stub stubJiraAPI) ListFilters(_ context.Context, _ jiraFilterListRequest) (jiraFilterPageResponse, error) {

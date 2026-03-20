@@ -201,6 +201,66 @@ func renderBoardText(item boardItem) string {
 	return strings.Join(lines, "\n")
 }
 
+func renderBoardSnapshotText(item boardSnapshotItem) string {
+	lines := []string{
+		fmt.Sprintf("board: %s (id=%d, type=%s)", item.Board.Name, item.Board.ID, item.Board.Type),
+	}
+	if item.Board.ProjectKey != "" || item.Board.ProjectName != "" {
+		lines = append(lines, fmt.Sprintf("project: %s | %s", item.Board.ProjectKey, item.Board.ProjectName))
+	}
+	if item.Board.LocationName != "" {
+		lines = append(lines, fmt.Sprintf("location: %s", item.Board.LocationName))
+	}
+	lines = append(lines, fmt.Sprintf("source: %s", item.Source.Type))
+	if item.Source.Sprint != nil {
+		lines = append(lines, fmt.Sprintf("sprint: %s (id=%d, state=%s)", item.Source.Sprint.Name, item.Source.Sprint.ID, item.Source.Sprint.State))
+		if item.Source.Sprint.Goal != "" {
+			lines = append(lines, fmt.Sprintf("sprint_goal: %s", item.Source.Sprint.Goal))
+		}
+	}
+	lines = append(lines, fmt.Sprintf("total_issues: %d", item.Totals.TotalIssues))
+	if len(item.StatusCounts) == 0 {
+		lines = append(lines, "status_counts: none")
+	} else {
+		parts := make([]string, 0, len(item.StatusCounts))
+		for _, count := range item.StatusCounts {
+			parts = append(parts, fmt.Sprintf("%s=%d", count.Name, count.Count))
+		}
+		lines = append(lines, fmt.Sprintf("status_counts: %s", strings.Join(parts, ", ")))
+	}
+	if item.Me != nil {
+		lines = append(lines, fmt.Sprintf("me: %s", item.Me.DisplayName))
+		lines = append(lines, fmt.Sprintf("my_issue_total: %d", len(item.MyIssues)))
+		lines = append(lines, "my_issues:")
+		lines = append(lines, renderBoardSnapshotIssueTable(item.MyIssues))
+	}
+	lines = append(lines, "issues:")
+	lines = append(lines, renderBoardSnapshotIssueTable(item.Issues))
+	lines = append(lines, renderPageSummary(item.Page))
+	return strings.Join(lines, "\n")
+}
+
+func renderBoardSnapshotIssueTable(items []issueItem) string {
+	var buffer bytes.Buffer
+	writer := tabwriter.NewWriter(&buffer, 0, 0, 2, ' ', 0)
+	_, _ = fmt.Fprintln(writer, "KEY\tSUMMARY\tSTATUS\tASSIGNEE\tPRIORITY")
+	for _, item := range items {
+		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n",
+			item.Key,
+			formatValue(item.Fields["summary"]),
+			formatValue(item.Fields["status"]),
+			formatValue(item.Fields["assignee"]),
+			formatValue(item.Fields["priority"]),
+		)
+	}
+	_ = writer.Flush()
+	text := strings.TrimSpace(buffer.String())
+	if text == "" {
+		return "no results"
+	}
+	return text
+}
+
 func renderFilterListText(items []filterItem, page pageDescriptor) string {
 	var buffer bytes.Buffer
 	writer := tabwriter.NewWriter(&buffer, 0, 0, 2, ' ', 0)

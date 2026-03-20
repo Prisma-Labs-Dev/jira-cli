@@ -131,6 +131,24 @@ func TestLiveCLIContracts(t *testing.T) {
 					"type": strings.TrimSpace(boards.Items[0].Type) != "",
 				},
 			})
+
+			snapshot := mustRunLiveJSON[singleEnvelope[boardSnapshotItem]](t, []string{"board", "snapshot", "--board", fmt.Sprintf("%d", boards.Items[0].ID), "--limit", "10", "--me", "--json"})
+			assertCanonicalGolden(t, "testdata/live-board-snapshot-json.golden", map[string]any{
+				"schema": snapshot.Schema,
+				"board": map[string]bool{
+					"id":   snapshot.Item.Board.ID != 0,
+					"name": strings.TrimSpace(snapshot.Item.Board.Name) != "",
+					"type": strings.TrimSpace(snapshot.Item.Board.Type) != "",
+				},
+				"sourceTypeKnown": snapshot.Item.Source.Type == "active-sprint" || snapshot.Item.Source.Type == "board",
+				"totals": map[string]bool{
+					"totalIssuesNonNegative": snapshot.Item.Totals.TotalIssues >= 0,
+					"myIssuesNonNegative":    snapshot.Item.Totals.MyIssues >= 0,
+				},
+				"statusCountsPresent": snapshot.Item.StatusCounts != nil,
+				"pageLimit":           snapshot.Item.Page.Limit,
+				"meIncluded":          snapshot.Item.Me != nil,
+			})
 		}
 	}
 

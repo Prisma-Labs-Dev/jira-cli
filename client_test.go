@@ -85,6 +85,55 @@ func TestJiraClientListBoardsUsesProjectFilter(t *testing.T) {
 	}
 }
 
+func TestJiraClientListBoardSprintsUsesStateFilter(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path != "/rest/agile/1.0/board/7/sprint" {
+			t.Fatalf("unexpected path: %s", request.URL.Path)
+		}
+		if request.URL.Query().Get("state") != "active,future" {
+			t.Fatalf("unexpected state query: %q", request.URL.Query().Get("state"))
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"startAt":0,"maxResults":50,"isLast":true,"values":[{"id":42,"name":"Sprint 1","state":"active"}]}`))
+	}))
+	defer server.Close()
+
+	client := newJiraClient(resolvedRuntimeConfig{site: server.URL, email: "agent@example.com", token: "test-token"})
+	response, err := client.ListBoardSprints(context.Background(), "7", jiraSprintListRequest{States: []string{"active", "future"}, Limit: 50, StartAt: 0})
+	if err != nil {
+		t.Fatalf("ListBoardSprints: %v", err)
+	}
+	if len(response.Values) != 1 || response.Values[0].ID != 42 {
+		t.Fatalf("unexpected response: %+v", response)
+	}
+}
+
+func TestJiraClientListSprintIssuesUsesFieldsAndPagination(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path != "/rest/agile/1.0/sprint/42/issue" {
+			t.Fatalf("unexpected path: %s", request.URL.Path)
+		}
+		if request.URL.Query().Get("fields") != "summary,status,assignee" {
+			t.Fatalf("unexpected fields query: %q", request.URL.Query().Get("fields"))
+		}
+		if request.URL.Query().Get("startAt") != "10" || request.URL.Query().Get("maxResults") != "5" {
+			t.Fatalf("unexpected pagination query: %s", request.URL.RawQuery)
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"startAt":10,"maxResults":5,"total":11,"issues":[{"id":"10001","key":"SCWI-282","fields":{"summary":"Implement thing","status":{"name":"In Progress"}}}]}`))
+	}))
+	defer server.Close()
+
+	client := newJiraClient(resolvedRuntimeConfig{site: server.URL, email: "agent@example.com", token: "test-token"})
+	response, err := client.ListSprintIssues(context.Background(), "42", jiraAgileIssueListRequest{Fields: []string{"summary", "status", "assignee"}, Limit: 5, StartAt: 10})
+	if err != nil {
+		t.Fatalf("ListSprintIssues: %v", err)
+	}
+	if len(response.Issues) != 1 || response.Issues[0].Key != "SCWI-282" {
+		t.Fatalf("unexpected response: %+v", response)
+	}
+}
+
 func TestJiraClientGetIssueCommentsUsesPagination(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Path != "/rest/api/3/issue/SCWI-282/comment" {

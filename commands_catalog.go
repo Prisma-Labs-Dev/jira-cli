@@ -106,6 +106,8 @@ func runBoard(argv []string, env cliEnvironment) error {
 		return runBoardList(argv[1:], env)
 	case "get":
 		return runBoardGet(argv[1:], env)
+	case "snapshot":
+		return runBoardSnapshot(argv[1:], env)
 	default:
 		return fmt.Errorf("unknown board command: %s", argv[0])
 	}

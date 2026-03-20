@@ -30,5 +30,6 @@ Examples:
   jira issue search --jql 'project = SCWI ORDER BY updated DESC' --limit 25 --json
   jira project list --limit 25
   jira board list --project SCWI --json
+  jira board snapshot --default --me --json
   jira filter list --limit 20
   jira field list --custom-only --search warehouse --json
